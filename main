@@ -1,0 +1,797 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Threading;
+using System.Runtime.Remoting.Messaging;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using static System.Net.Mime.MediaTypeNames;
+using System.Diagnostics.Eventing.Reader;
+using System.Diagnostics;
+
+namespace My_Calculator
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+       
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            comboBoxFrom.SelectedIndex = 0;
+            comboBoxTo.SelectedIndex = 1;
+
+
+            
+            ActiveLanguge = GenrateEnglishLanguge();
+
+            GenrateControlsLanguge();
+
+        }
+
+        enum enNumber { Binary=2 , Octal = 8 , Decimal = 10 , Hexdaecimal = 16 , NonOrRong = 0 }
+
+        enum enLanguge { en , ar}
+
+        enum enHexaDecimalToDecimal { A=10 , B=11 , C = 12 , D = 13 , E = 14 , F = 15   }
+      
+        stLanguge ActiveLanguge ;
+
+        enNumber enNumberFrom , enNumberTo  ;
+
+        Int64 MainNumberWhichConvertIt = 0;
+
+        List<char> AllowedCharsInHexadecimal = new List<char> {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+
+        List<char> AllowedCharsInDecimal = new List<char> { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+
+        List<char> AllowedCharsInOctal = new List<char> { '0', '1', '2', '3', '4', '5', '6', '7' };
+
+
+        List<char> AllowedCharsInBinary = new List<char> { '0', '1' };
+
+        Font BoldFont = new Font("Calibri", 28 ,FontStyle.Bold);
+        Font NormalFont = new Font("Calibri", 25);
+        Font SmallFont = new Font("Calibri", 20,FontStyle.Bold);
+        struct stLanguge
+        {
+            public enLanguge enActiveLanguge;
+            public string
+                Explanationbtn,
+                TapcontrolTitle,
+                NoNeedToConvert;
+
+            public string
+                errProvMsgOnly14Digits,
+                errProvMsgHexadecimalValidate,
+                errProvMsgOctalValidate,
+                errProvMsgDecimalValidate,
+                errProvMsgBinaryValidate;
+
+            public string
+                Reminder,
+                Step1Title,
+                Step1Title1,
+                Step1Title2,
+
+                Step1Message1,
+                Step1Message2,
+                Step1Message3,
+
+                Step2Title,
+                Step2Title1,
+                Step2Title2,
+                Step2Title3,
+
+                Step2Message1,
+                Step2Message2,
+                Step2Message3,
+                Step2Message4,
+                Step2Message5,
+                Step2Message6,
+                Step2Message7,
+
+                CompleteResultMessage;
+        };
+
+
+
+
+
+        private stLanguge GenrateEnglishLanguge()
+        {
+            stLanguge en;
+
+            en.enActiveLanguge = enLanguge.en;
+
+            en.Reminder = " Reminder = ";
+            en.Explanationbtn = "Explanation";
+            en.TapcontrolTitle = "Converter";
+
+            en.errProvMsgOnly14Digits = "Only 14 Digits";
+            en.errProvMsgHexadecimalValidate = "Enter Only 0-9 , A-F Hexadecimal Number";
+            en.errProvMsgOctalValidate = "Enter Only 0-7 Number";
+            en.errProvMsgDecimalValidate = "Enter Only 0-9 Number";
+            en.errProvMsgBinaryValidate = "Enter Only 0 Or 1 Number";
+
+            en.Step1Title = "Step ";
+            en.Step1Title1 = ": Convert";
+            en.Step1Title2 = "To Decimal System";
+            en.NoNeedToConvert = "Same System ,  No Need To Convert !";
+
+            en.Step1Message1 = "For Conversion From ";
+            en.Step1Message2 = " To Decimal Number System , Each Coefficient Is Multipliedby By The Corresponding Power Of ";
+            en.Step1Message3 = " and added to Obtian The Decimal Number";
+
+            en.Step2Title = "Step ";
+            en.Step2Title1 = " : Convert ";
+            en.Step2Title2 = " To ";
+            en.Step2Title3 = " System ";
+
+            en.Step2Message1 = "To Convert a Decimal Number Intger Part ";
+            en.Step2Message2 = " Into ";
+            en.Step2Message3 = " , We Divide The Number By ";
+            en.Step2Message4 = " And Record The Reminder. Then Divide The Result Of This Divison Again By ";
+            en.Step2Message5 = " And So On Until The Result Of The Division Is Zero. ";
+            en.Step2Message6 = "Now , We Have To Scan The Reminder From The Bottom . So, The Intger Part ";
+
+            en.Step2Message7 = " Number is = ";
+
+            en.CompleteResultMessage = "The Complete Result = ";
+
+            return en;
+
+        }
+        private stLanguge GenrateArabicLanguge()
+        {
+            stLanguge ar;
+
+            ar.enActiveLanguge = enLanguge.ar;
+            ar.Reminder = "باقي القسمة = ";
+            ar.Explanationbtn = "الشرح";
+            ar.TapcontrolTitle = "المحول";
+            ar.NoNeedToConvert = "لايمكن التحويل في نفس النظام ";
+
+
+            ar.errProvMsgOnly14Digits = "فقط 14 خانة";
+            ar.errProvMsgHexadecimalValidate = "مسموح فقط بادخال الارقام 1-9 و الاحرف A-F  ";
+            ar.errProvMsgOctalValidate = "مسموح فقط بادخال الارقام 0-7";
+            ar.errProvMsgDecimalValidate = "مسموح فقط بادخال الارقام0-9 ";
+            ar.errProvMsgBinaryValidate = "مسموح فقط بادخال الارقام 0 و 1  ";
+
+
+            ar.Step1Title = "الخطوة ";
+            ar.Step1Title1 = ": تحويل";
+            ar.Step1Title2 = "الى النظام العشري Decimal ";
+
+            ar.Step1Message1 = "للتحويل من  ";
+            ar.Step1Message2 = "  الى النظام العشري Decimal  , يتم ضرب كل معامل بالقوة المقابلة ل  ";
+            ar.Step1Message3 = " ثم جمعها للحصول على الرقم العشري ";
+
+            ar.Step2Title = "الخطوة ";
+            ar.Step2Title1 = " : تحويل ";
+            ar.Step2Title2 = " الى ";
+            ar.Step2Title3 = "  ";
+
+            ar.Step2Message1 = " لتحويل العدد العشري الصحيح ";
+            ar.Step2Message2 = " الى ";
+            ar.Step2Message3 = " , نقسم الرقم على ";
+            ar.Step2Message4 = " ونسجل باقي القسمة , ثم نقسم الناتج على  ";
+            ar.Step2Message5 = " وهكذا  حتى يصبح خارج القسمة يساوي صفر. ";
+            ar.Step2Message6 = "الان نقوم بتجميع باقي القسمة من الاسفل الى الاعلى  ويعتبر عدد   ";
+
+            ar.Step2Message7 = "  وبالتالي الرقم يساوي  = ";
+
+            ar.CompleteResultMessage = "الناتج النهائي = ";
+
+
+            return ar;
+        }
+
+        private void GenrateControlsLanguge()
+        {
+            tabControl1.TabPages[0].Text = ActiveLanguge.TapcontrolTitle;
+            btnConvert.Text = ActiveLanguge.Explanationbtn;
+            btnLangugeChanger.Text = "عربي";
+        }
+
+        private void customButton1_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(textBoxFrom.Text))
+            {
+                textBoxFrom.Focus();
+                return;
+            }
+
+            richTextBoxSteps.Visible = true;
+            richTextBoxSteps.Clear();
+            this.Height = 877;
+
+            MainNumberWhichConvertIt = Convert.ToInt64(textBoxFrom.Text , (byte)enNumberFrom);
+
+            DeterMainSolutionMethod();
+        }
+
+        private void AppendStep1(RichTextBox richTextBoxSteps , byte Step)
+        {
+            richTextBoxSteps.SelectionFont = BoldFont;
+            richTextBoxSteps.AppendText(ActiveLanguge.Step1Title + Step );
+            AppendTextLiterByLiter(ActiveLanguge.Step1Title1, richTextBoxSteps);
+            
+            richTextBoxSteps.AppendText(" (" + textBoxFrom.Text + ")");
+            richTextBoxSteps.SelectionCharOffset = -15;
+            richTextBoxSteps.AppendText(Convert.ToString((byte)enNumberFrom));
+
+            richTextBoxSteps.SelectionCharOffset = 0;
+
+            AppendTextLiterByLiter(ActiveLanguge.Step1Title2, richTextBoxSteps);
+            richTextBoxSteps.AppendText(Environment.NewLine);
+            richTextBoxSteps.SelectionFont = NormalFont;
+
+            AppendTextLiterByLiter(ActiveLanguge.Step1Message1, richTextBoxSteps);
+            richTextBoxSteps.AppendText(enNumberFrom.ToString());
+            AppendTextLiterByLiter(ActiveLanguge.Step1Message2, richTextBoxSteps);
+
+            richTextBoxSteps.SelectionFont = SmallFont;
+            richTextBoxSteps.AppendText(Convert.ToString((byte)enNumberFrom));
+            richTextBoxSteps.SelectionFont = NormalFont;
+            AppendTextLiterByLiter(ActiveLanguge.Step1Message3, richTextBoxSteps);
+            richTextBoxSteps.ScrollToCaret();
+        }
+
+        private void AppendStep2(RichTextBox richTextBoxSteps, String Number,byte Step)
+        {
+            richTextBoxSteps.SelectionFont = BoldFont;
+            richTextBoxSteps.AppendText(ActiveLanguge.Step2Title + Step);
+            AppendTextLiterByLiter(ActiveLanguge.Step2Title1, richTextBoxSteps);
+            richTextBoxSteps.ScrollToCaret();
+
+            richTextBoxSteps.AppendText(" (" + Number + ")");
+            richTextBoxSteps.SelectionCharOffset = -15;
+            richTextBoxSteps.AppendText("10");
+            richTextBoxSteps.SelectionCharOffset = 0;
+            richTextBoxSteps.ScrollToCaret();
+
+            AppendTextLiterByLiter(ActiveLanguge.Step2Title2, richTextBoxSteps);
+            richTextBoxSteps.AppendText(enNumberTo.ToString());
+            AppendTextLiterByLiter(ActiveLanguge.Step2Title3, richTextBoxSteps);
+            richTextBoxSteps.SelectionFont = NormalFont;
+            richTextBoxSteps.AppendText(Environment.NewLine);
+            richTextBoxSteps.ScrollToCaret();
+
+            AppendTextLiterByLiter(ActiveLanguge.Step2Message1, richTextBoxSteps);
+            richTextBoxSteps.SelectionFont = SmallFont;
+            richTextBoxSteps.AppendText(textBoxFrom.Text);
+            richTextBoxSteps.SelectionFont = NormalFont;
+            AppendTextLiterByLiter(ActiveLanguge.Step2Message2, richTextBoxSteps);
+            richTextBoxSteps.ScrollToCaret();
+
+            richTextBoxSteps.AppendText(enNumberTo.ToString());
+            AppendTextLiterByLiter(ActiveLanguge.Step2Message3, richTextBoxSteps);
+
+            richTextBoxSteps.SelectionFont = SmallFont;
+            richTextBoxSteps.AppendText(Convert.ToString((byte)enNumberTo));
+           
+
+            AppendTextLiterByLiter(ActiveLanguge.Step2Message4, richTextBoxSteps);
+
+            richTextBoxSteps.SelectionFont = SmallFont;
+            richTextBoxSteps.AppendText(Convert.ToString((byte)enNumberTo));
+            richTextBoxSteps.SelectionFont = NormalFont;
+            
+
+            AppendTextLiterByLiter(ActiveLanguge.Step2Message5, richTextBoxSteps);
+            richTextBoxSteps.AppendText(Environment.NewLine + Environment.NewLine );
+            richTextBoxSteps.ScrollToCaret();
+        }
+        
+        private void AppendStep2Part2(RichTextBox richTextBoxSteps)
+        {
+            richTextBoxSteps.ScrollToCaret();
+            richTextBoxSteps.AppendText(Environment.NewLine + Environment.NewLine);
+            AppendTextLiterByLiter(ActiveLanguge.Step2Message6, richTextBoxSteps);
+            richTextBoxSteps.AppendText(enNumberTo.ToString());
+            AppendTextLiterByLiter(ActiveLanguge.Step2Message7, richTextBoxSteps);
+            richTextBoxSteps.ScrollToCaret();
+
+        }
+
+        private void AppendCompleteResult(RichTextBox richTextBoxSteps , string Message , string Number)
+        {
+            richTextBoxSteps.AppendText(Environment.NewLine + Environment.NewLine);
+            richTextBoxSteps.SelectionFont = BoldFont;
+            AppendTextLiterByLiter(Message,richTextBoxSteps);
+            richTextBoxSteps.AppendText(Number);
+            richTextBoxSteps.SelectionFont = NormalFont;
+            richTextBoxSteps.ScrollToCaret();
+        }
+        private string ConvertFromAnyToDecimal(string From ,byte Step)
+        {
+
+            AppendStep1(richTextBoxSteps , Step);
+
+            Int64 Number = MainNumberWhichConvertIt, Result = 0, TotalColect = 0;
+
+            Queue<Int64> Results = new Queue<Int64>();
+
+            short Counter = 0, Reminder = 0;
+
+            richTextBoxSteps.AppendText(Environment.NewLine + "= ");
+
+            while (Number > 0)
+            {
+                Reminder = (short)(Number % (byte)enNumberFrom);
+
+                Number = Number / (byte)enNumberFrom;
+
+                Result = (Int64)(Math.Pow((Double)enNumberFrom, Counter) * (Reminder));
+                Results.Enqueue(Result);
+                TotalColect += Result;
+
+
+                if (Counter > 0)
+                {
+                    richTextBoxSteps.AppendText("+");
+                }
+
+                richTextBoxSteps.AppendText("(");
+                AppendExponentialNumber((byte)enNumberFrom, Counter, richTextBoxSteps, 13);
+                richTextBoxSteps.AppendText(" × " + Reminder + ")");
+                Counter++;
+            }
+
+
+            richTextBoxSteps.AppendText(Environment.NewLine + "= ");
+
+            while (Results.Count > 0)
+            {
+                richTextBoxSteps.AppendText("( ");
+                richTextBoxSteps.AppendText(Results.Dequeue().ToString());
+                richTextBoxSteps.AppendText(" )");
+
+                if (Results.Count > 0)
+                {
+                    richTextBoxSteps.AppendText("+");
+                }
+            }
+
+            richTextBoxSteps.AppendText(Environment.NewLine + "= ");
+            richTextBoxSteps.AppendText(TotalColect.ToString());
+            richTextBoxSteps.AppendText(Environment.NewLine);
+
+            return TotalColect.ToString();
+        }
+
+        private string ConvertFromDecimalToAny(string Num , byte Step)
+        {
+            AppendStep2(richTextBoxSteps ,Num, Step);
+
+
+            Int64 Number = Convert.ToInt64(Num), Reminder = 0 , Result = 0  ; 
+
+            Stack<Int64> Reminders = new Stack<Int64>();
+
+            while (Number / (byte)enNumberTo > 0)
+            {
+                Result = Number / (byte)enNumberTo;
+                Reminder = Number % (byte)enNumberTo;
+
+                Reminders.Push(Reminder);
+
+                richTextBoxSteps.AppendText(Number.ToString() + " ÷ " + (byte)enNumberTo + " = " + Result + " ");
+                richTextBoxSteps.AppendText(ActiveLanguge.Reminder + Reminder + Environment.NewLine);
+
+                
+
+                
+                Number = Result;
+            }
+
+            Result = Number / (byte)enNumberTo;
+            Reminder = Number % (byte)enNumberTo;
+
+            Reminders.Push(Reminder);
+
+            richTextBoxSteps.AppendText(Number + " ÷ " + (byte)enNumberTo + " = " + Result + " ");
+            richTextBoxSteps.AppendText(ActiveLanguge.Reminder + Reminder + Environment.NewLine );
+
+
+            string LastNumber = "";
+            while(Reminders.Count > 0 )
+            {
+                LastNumber += CollectNumbrsForHexaDecimal((byte)Reminders.First());
+                Reminders.Pop();
+
+            }
+
+             
+            AppendStep2Part2(richTextBoxSteps);
+            richTextBoxSteps.AppendText(LastNumber);
+            return LastNumber;
+
+
+        }
+
+        private string CollectNumbrsForHexaDecimal(byte Num)
+        {
+            switch((enHexaDecimalToDecimal)Num)
+            {
+                case enHexaDecimalToDecimal.A:
+                    return "A";
+
+                case enHexaDecimalToDecimal.B:
+                    return "B"; 
+
+                case enHexaDecimalToDecimal.C:
+                    return "C";
+
+                case enHexaDecimalToDecimal.D:
+                    return "D";
+
+                case enHexaDecimalToDecimal.E:
+                    return "E";
+
+                case enHexaDecimalToDecimal.F:
+                    return "F";
+            }
+
+            return Num.ToString();
+        }
+
+        private void AppendTextLiterByLiter(string Text,RichTextBox richTextBox)
+        {
+            foreach (char l in Text)
+            {
+                richTextBox.AppendText(l.ToString());
+                Thread.Sleep(10);
+                richTextBoxSteps.Refresh();
+                
+            }
+        }
+        private void AppendExponentialNumber(long Number, long Power, RichTextBox richTextBox,sbyte Offset = 18, short PowerFontSize = 20)
+        {
+            richTextBox.AppendText(Number.ToString());
+            richTextBox.SelectionCharOffset = Offset;
+
+            richTextBox.SelectionFont = new Font(richTextBox.Font.FontFamily, PowerFontSize);
+            richTextBox.AppendText(Power.ToString());
+
+            richTextBox.SelectionCharOffset = 0;
+            richTextBox.SelectionFont = NormalFont;
+
+        }
+
+        private enNumber CheckUserSelectInComboBox(string ComboBoxItemName)
+        {
+            switch (ComboBoxItemName)
+            {
+                case "Hexadecimal":
+                    {
+                        return enNumber.Hexdaecimal;
+                       
+                    }
+                case "Octal":
+                    {
+                        return enNumber.Octal;                     
+                    }
+
+                case "Decimal":
+                    {
+                        return enNumber.Decimal;    
+                    }
+                case "Binary":
+                    {
+                        return enNumber.Binary;                       
+                    }
+
+                default:
+
+                    {
+                        MessageBox.Show("Rong in Name Of Combo Box List");
+                        return enNumber.NonOrRong;
+                    }    
+            }
+        }
+
+        private void comboBoxFrom_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            enNumberFrom = CheckUserSelectInComboBox(comboBoxFrom.SelectedItem.ToString());
+            textBoxFrom_TextChanged(sender, e);
+        }
+
+        private void textBoxFrom_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            char KeyPresed = char.ToUpper(e.KeyChar);
+
+
+            if(textBoxFrom.Text.Length > 14 )
+            {
+                errorProvider1.SetError(textBoxFrom, ActiveLanguge.errProvMsgOnly14Digits);
+
+                if (KeyPresed != (char)Keys.Back)
+                {
+                    e.Handled = true;
+                }
+                
+                return;
+            }
+            
+            switch (enNumberFrom)
+            {
+                case enNumber.Hexdaecimal:
+                    {
+                        if (AllowedCharsInHexadecimal.Contains(KeyPresed) || KeyPresed == 
+                            (char)Keys.Back) 
+                        {
+                            errorProvider1.SetError(textBoxFrom, "");
+                        }
+                        else
+                        {
+                            e.Handled = true;
+                            errorProvider1.SetError(textBoxFrom, ActiveLanguge.errProvMsgHexadecimalValidate);
+                        }
+                        return ;
+
+                    }
+                case  enNumber.Octal:
+                    {
+                        if (AllowedCharsInOctal.Contains(KeyPresed) || KeyPresed ==
+                           (char)Keys.Back)
+                        {
+                            errorProvider1.SetError(textBoxFrom, "");
+                        }
+                        else
+                        {
+                            e.Handled = true;
+                            errorProvider1.SetError(textBoxFrom, ActiveLanguge.errProvMsgOctalValidate);
+                        }
+                        return ;
+                    }
+
+                case enNumber.Decimal:
+                    {
+                        if (AllowedCharsInDecimal.Contains(KeyPresed) || KeyPresed ==
+                         (char)Keys.Back)
+                        {
+                            errorProvider1.SetError(textBoxFrom, "");
+                        }
+                        else
+                        {
+                            e.Handled = true;
+                            errorProvider1.SetError(textBoxFrom, ActiveLanguge.errProvMsgDecimalValidate);
+                        }
+                        return ;
+                    }
+                case enNumber.Binary:
+                    {
+                        if (AllowedCharsInBinary.Contains(KeyPresed) || KeyPresed ==
+                            (char)Keys.Back) 
+                        {
+                            errorProvider1.SetError(textBoxFrom, "");
+                        }
+                        else
+                        {
+                            e.Handled = true;
+                            errorProvider1.SetError(textBoxFrom,                 ActiveLanguge.errProvMsgBinaryValidate);
+                        }
+                        return ;
+                    }
+
+            }
+        }
+
+        private void textBoxFrom_TextChanged(object sender, EventArgs e)
+        {
+
+
+            if (textBoxFrom.Text.Length > 14)
+            {
+                errorProvider1.SetError(textBoxFrom,ActiveLanguge.errProvMsgOnly14Digits);
+            }
+
+            switch (enNumberFrom)
+            {
+                case enNumber.Hexdaecimal:
+                    {
+                        if (ValidateTextBox(textBoxFrom.Text, AllowedCharsInHexadecimal))
+                        {
+                            errorProvider1.SetError(textBoxFrom, "");
+                            btnConvert.Enabled = true;
+                        }
+                        else
+                        {
+                            errorProvider1.SetError(textBoxFrom, ActiveLanguge.errProvMsgHexadecimalValidate);
+                            btnConvert.Enabled = false;
+                            textBoxTo.Clear();
+                            return;
+                        }
+                        break;
+
+                    }
+                case enNumber.Octal:
+                    {
+                        if (ValidateTextBox(textBoxFrom.Text, AllowedCharsInOctal))
+                        {
+                            errorProvider1.SetError(textBoxFrom, "");
+                            btnConvert.Enabled = true;
+                        }
+                        else
+                        {
+                            errorProvider1.SetError(textBoxFrom,ActiveLanguge.errProvMsgOctalValidate);
+                            textBoxTo.Clear();
+                            btnConvert.Enabled = false;
+                            return;
+                        }
+                        break;
+                    }
+
+                case enNumber.Decimal:
+                    {
+                        if (ValidateTextBox(textBoxFrom.Text, AllowedCharsInDecimal))
+                        {
+                            errorProvider1.SetError(textBoxFrom, "");
+                            btnConvert.Enabled = true;
+                        }
+                        else
+                        {
+                            errorProvider1.SetError(textBoxFrom, ActiveLanguge.errProvMsgDecimalValidate);
+                            textBoxTo.Clear();
+                            btnConvert.Enabled = false;
+                            return;
+                        }
+                        break;
+                    }
+                case enNumber.Binary:
+                    {
+                        if (ValidateTextBox(textBoxFrom.Text, AllowedCharsInBinary))
+                        {
+                            errorProvider1.SetError(textBoxFrom, "");
+                            btnConvert.Enabled = true;
+                        }
+                        else
+                        {
+                            errorProvider1.SetError(textBoxFrom, ActiveLanguge.errProvMsgBinaryValidate);
+                            textBoxTo.Clear();
+                            btnConvert.Enabled = false;
+                            return;
+                        }
+                        break;
+                    }
+
+            }
+
+            if (!string.IsNullOrEmpty(textBoxFrom.Text))
+            {
+
+                if (enNumberFrom == enNumberTo)
+                {
+                    textBoxTo.Text = textBoxFrom.Text;
+                    return;
+                }
+
+                else if (enNumberFrom == enNumber.Decimal)
+                {
+
+                    textBoxTo.Text = Convert.ToString(Convert.ToInt64(textBoxFrom.Text), (byte)enNumberTo).ToUpper();
+                }
+
+                else if (enNumberTo == enNumber.Decimal)
+                {
+                    textBoxTo.Text = Convert.ToInt64(textBoxFrom.Text, (byte)enNumberFrom).ToString().ToUpper();
+
+                }
+                else
+                {
+                    textBoxTo.Text = Convert.ToString(Convert.ToInt64(textBoxFrom.Text , (byte)enNumberFrom), (byte)enNumberTo).ToUpper();
+                }
+            } 
+            else   textBoxTo.Clear();
+ 
+        }
+
+        private void btnLangugeChanger_Click(object sender, EventArgs e)
+        { 
+
+            switch(ActiveLanguge.enActiveLanguge)
+            {
+                case enLanguge.ar:
+
+                    richTextBoxSteps.RightToLeft = RightToLeft.No;
+                    ActiveLanguge = GenrateEnglishLanguge();
+
+                    GenrateControlsLanguge();
+                    btnLangugeChanger.Text = "عربي";
+
+
+                    break;
+
+                case enLanguge.en:
+
+                    richTextBoxSteps.RightToLeft = RightToLeft.Yes;
+                    ActiveLanguge = GenrateArabicLanguge();
+
+                    GenrateControlsLanguge();
+                    btnLangugeChanger.Text = "English";
+
+                    break;
+            }
+
+            
+
+            if (!string.IsNullOrWhiteSpace(richTextBoxSteps.Text))
+            {
+                customButton1_Click(sender, e);
+            }
+
+        }
+
+        private void comboBoxTo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            
+            enNumberTo = CheckUserSelectInComboBox(comboBoxTo.SelectedItem.ToString());
+            textBoxFrom_TextChanged(sender, e);
+        }
+
+        private void textBoxFrom_Validated(object sender, EventArgs e)
+        {
+
+        }
+
+        private void DeterMainSolutionMethod()
+        {
+            if (enNumberFrom == enNumberTo)
+            {
+                AppendTextLiterByLiter( ActiveLanguge.NoNeedToConvert , richTextBoxSteps);
+                return;
+            }
+
+            else if (enNumberFrom == enNumber.Decimal)
+            {
+                AppendCompleteResult(richTextBoxSteps, ActiveLanguge.CompleteResultMessage,
+                    ConvertFromDecimalToAny(MainNumberWhichConvertIt.ToString(),1));
+
+            }
+
+            else if (enNumberTo == enNumber.Decimal)
+            {
+                AppendCompleteResult(richTextBoxSteps, ActiveLanguge.CompleteResultMessage,
+                ConvertFromAnyToDecimal(MainNumberWhichConvertIt.ToString() , 1));
+
+            }
+            else
+            {
+                AppendCompleteResult(richTextBoxSteps, ActiveLanguge.CompleteResultMessage,
+                ConvertFromDecimalToAny(ConvertFromAnyToDecimal(MainNumberWhichConvertIt.ToString() ,1),  2 ));
+
+            }
+
+        }
+
+        private bool ValidateTextBox(string TextToValidate , List<char> ListChars )
+        {
+            foreach( char c in TextToValidate) 
+            {
+
+                if(! ListChars.Contains(char.ToUpper(c)))
+                { 
+                    return false ; 
+                }
+
+            }
+
+            return true;
+
+        }
+
+
+    }
+}
